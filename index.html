@@ -8,9 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Chart.js Library -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- PDF Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
@@ -109,7 +107,6 @@
 
     <div class="min-h-screen flex flex-col items-center justify-center p-4 main-container pt-16">
         <div class="w-full max-w-4xl mx-auto">
-            <!-- Header & Input Section -->
             <div id="scan-section" class="relative bg-white/80 backdrop-blur-sm p-8 sm:p-12 rounded-2xl shadow-2xl border border-gray-200/80 text-center">
                 <div class="relative z-10">
                     <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-900 tracking-tight">Cookie Compliance Audit</h1>
@@ -146,10 +143,8 @@
                 </div>
             </div>
 
-            <!-- Results Section -->
             <div id="resultsSection" class="mt-10 hidden">
-                 <!-- Summary Cards -->
-                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
                     <div id="totalCard" class="card-filter interactive-card bg-white p-4 rounded-xl border border-gray-200/80 text-center shadow-sm cursor-pointer"><p class="text-3xl font-bold text-gray-800" id="totalCookies">0</p><p class="text-sm text-gray-500">Total Cookies</p></div>
                     <div id="violationsCard" class="card-filter interactive-card bg-red-100 p-4 rounded-xl border border-red-300 text-center shadow-sm cursor-pointer hover:bg-red-200"><p class="text-3xl font-bold text-red-600" id="consentViolations">0</p><p class="text-sm text-red-700">Consent Violations</p></div>
                     <div id="highRiskCard" class="card-filter interactive-card bg-white p-4 rounded-xl border border-gray-200/80 text-center shadow-sm cursor-pointer hover:bg-gray-100"><p class="text-3xl font-bold text-red-600" id="highRiskCookies">0</p><p class="text-sm text-gray-500">High Risk</p></div>
@@ -158,7 +153,6 @@
                     <div id="targetingCard" class="card-filter interactive-card bg-white p-4 rounded-xl border border-gray-200/80 text-center shadow-sm cursor-pointer"><p class="text-3xl font-bold text-orange-500" id="targetingCookies">0</p><p class="text-sm text-gray-500">Targeting</p></div>
                 </div>
                 
-                <!-- Filter & Action Buttons -->
                 <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
                     <div id="filterContainer" class="flex flex-wrap gap-2" role="group"></div>
                     <div class="flex gap-3">
@@ -166,14 +160,13 @@
                             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H5a1 1 0 110-2V4zm3 1h2v7H7V5zm4 0h2v7h-2V5z" clip-rule="evenodd"></path></svg>
                             Download PDF
                         </button>
-                         <button id="clearButton" class="interactive-btn bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-lg text-sm shadow-sm flex items-center gap-2">
+                           <button id="clearButton" class="interactive-btn bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-lg text-sm shadow-sm flex items-center gap-2">
                             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd"></path></svg>
                             New Scan
                         </button>
                     </div>
                 </div>
 
-                <!-- Results Table -->
                 <div class="bg-white rounded-2xl shadow-lg border border-gray-200/80 overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
@@ -192,7 +185,6 @@
                     </div>
                 </div>
 
-                <!-- Visualizations -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
                     <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-lg border border-gray-200/80">
                         <h3 class="text-lg font-semibold text-gray-800 mb-4">Risk Level Analysis</h3>
@@ -204,7 +196,6 @@
                     </div>
                 </div>
                 
-                <!-- Disclaimer -->
                 <div class="mt-8 text-center text-sm text-gray-500 p-4 bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/80">
                     <p><strong class="font-semibold text-gray-600">Note on Crawling:</strong> This tool performs a highly realistic *simulation* of a multi-page website scan. Due to browser security policies, a frontend-only application cannot perform a live, exhaustive crawl of an external website. A full implementation would require a backend service.</p>
                 </div>
@@ -212,7 +203,6 @@
         </div>
     </div>
 
-    <!-- Modals -->
     <div id="errorModalContainer" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"></div>
     <div id="detailsModalContainer" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"></div>
 
@@ -246,8 +236,7 @@
         let categoryChartInstance = null;
         let riskChartInstance = null;
         let reportCounts = {};
-
-        // --- Database ---
+         // --- Database ---
         const KNOWN_COOKIE_DB = {
             'sessionid': { category: 'Strictly Necessary Cookies', purpose: 'Maintains user session state after login.', vendor: 'Self-hosted' },
             'csrftoken': { category: 'Strictly Necessary Cookies', purpose: 'Prevents Cross-Site Request Forgery attacks.', vendor: 'Self-hosted' },
@@ -265,7 +254,13 @@
             'ccpa_notice_viewed': { category: 'Strictly Necessary Cookies', purpose: 'Tracks if a user in California has seen the CCPA notice.', vendor: 'Self-hosted' },
             'gdpr_consent': { category: 'Strictly Necessary Cookies', purpose: 'Stores user consent choices under GDPR.', vendor: 'Self-hosted' }
         };
-        
+
+        // --- Randstad Digital Logo Base64 (Placeholder) ---
+        // REPLACE THIS WITH THE ACTUAL BASE64 STRING OF YOUR LOGO
+        // You can use online tools (e.g., https://base64.guru/converter/encode/image) to convert your logo image to a Base64 string.
+        // Make sure it's a small, optimized image (e.g., SVG or PNG) for better PDF performance.
+        const RANDSTAD_DIGITAL_LOGO_BASE64 = 'data:image/png;base64,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" fill="currentColor"/></svg>'; // Replace with your actual Base64 string
+
         // --- Utility & Helper Functions ---
         function isValidUrl(string) { try { new URL(string); return true; } catch (_) { return false; } }
         function getRiskBadge(risk, reasons = []) { 
@@ -300,6 +295,15 @@
             
             const scannedUrl = urlInput.value;
             const scanDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+            // Add Randstad Digital Logo
+            // You might need to adjust the position (x, y) and size (width, height) based on your logo and desired layout.
+            // Example for top-right corner:
+            const imgWidth = 30; // Adjust as needed
+            const imgHeight = 10; // Adjust as needed, maintaining aspect ratio
+            const pageWidth = doc.internal.pageSize.getWidth();
+            doc.addImage(RANDSTAD_DIGITAL_LOGO_BASE64, 'PNG', pageWidth - imgWidth - 10, 10, imgWidth, imgHeight);
+
 
             // Report Header
             doc.setFontSize(18);
