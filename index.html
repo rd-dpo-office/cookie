@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cookie Scanning System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- PDF Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        @keyframes animate-gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .main-container {
+            background: linear-gradient(135deg, #e0eafc, #cfdef3, #e6e9f0, #eef1f5);
+            background-size: 400% 400%;
+            animation: animate-gradient 20s ease infinite;
+        }
+        .spinner {
+            border-top-color: #ffffff;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        .modal-enter {
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        tr[data-clickable="true"]:hover {
+            background-color: #f9fafb; /* gray-50 */
+            cursor: pointer;
+        }
+        .filter-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .filter-btn.active {
+            background-color: #2563eb; /* blue-600 */
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        .card-filter {
+            transition: all 0.2s ease-in-out;
+        }
+        .card-filter.active {
+            border-color: #2563eb; /* blue-600 */
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.4);
+            transform: translateY(-2px);
+        }
+        .interactive-card {
+            transition: all 0.2s ease-in-out;
+        }
+        .interactive-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .interactive-btn {
+            transition: all 0.15s ease-in-out;
+        }
+        .interactive-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .interactive-btn:active {
+            transform: translateY(0px);
+            box-shadow: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+        }
+    </style>
+</head>
+<body class="antialiased bg-gray-100">
+    <nav class="bg-white/80 backdrop-blur-sm shadow-sm fixed w-full z-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <svg class="w-8 h-8 text-blue-600" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M8.5 9C9.05228 9 9.5 8.55228 9.5 8C9.5 7.44772 9.05228 7 8.5 7C7.94772 7 7.5 7.44772 7.5 8C7.5 8.55228 7.94772 9 8.5 9Z" fill="currentColor"/>
+                        <path d="M15.5 12C16.0523 12 16.5 11.5523 16.5 11C16.5 10.4477 16.0523 10 15.5 10C14.9477 10 14.5 10.4477 14.5 11C14.5 11.5523 14.9477 12 15.5 12Z" fill="currentColor"/>
+                        <path d="M11.5 16C12.0523 16 12.5 15.5523 12.5 15C12.5 14.4477 12.0523 14 11.5 14C10.9477 14 10.5 14.4477 10.5 15C10.5 15.5523 10.9477 16 11.5 16Z" fill="currentColor"/>
+                    </svg>
+                    <span class="ml-2 text-xl font-bold text-gray-800">Cookie Scanner</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="min-h-screen flex flex-col items-center justify-center p-4 main-container pt-16">
+        <div class="w-full max-w-4xl mx-auto">
+            <!-- Header & Input Section -->
+            <div id="scan-section" class="relative bg-white/80 backdrop-blur-sm p-8 sm:p-12 rounded-2xl shadow-2xl border border-gray-200/80 text-center">
+                <div class="relative z-10">
+                    <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-900 tracking-tight">Cookie Compliance Audit</h1>
+                    <p class="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">Enter a website URL to generate a comprehensive cookie audit, identify privacy risks, and ensure compliance.</p>
+                    
+                    <div class="mt-8 max-w-2xl mx-auto">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label for="pageCount" class="sr-only">Scan Depth</label>
+                                <select id="pageCount" class="w-full bg-gray-50 text-gray-900 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none transition duration-200">
+                                    <option value="1">Scan Depth: 1 Page (Quick)</option>
+                                    <option value="5">Scan Depth: 5 Pages (Standard)</option>
+                                    <option value="20">Scan Depth: 20 Pages (Deep)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="geoRegion" class="sr-only">Simulate From</label>
+                                <select id="geoRegion" class="w-full bg-gray-50 text-gray-900 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none transition duration-200">
+                                    <option value="global">Simulate From: Global</option>
+                                    <option value="eu">Simulate From: EU (GDPR)</option>
+                                    <option value="us">Simulate From: US (CCPA)</option>
+                                    <option value="in">Simulate From: India</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="flex flex-col sm:flex-row gap-2">
+                            <input type="url" id="urlInput" placeholder="https://example.com" class="flex-grow w-full bg-white text-gray-900 placeholder-gray-400 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none transition duration-200">
+                            <button id="scanButton" class="interactive-btn w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center disabled:bg-blue-400 disabled:cursor-not-allowed shadow-md">
+                                <span id="buttonText">Scan Website</span>
+                                <div id="loader" class="spinner w-5 h-5 rounded-full border-2 border-t-white border-blue-200 hidden"></div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div id="resultsSection" class="mt-10 hidden">
+                 <!-- Summary Cards -->
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+                    <div id="totalCard" class="card-filter interactive-card bg-white p-4 rounded-xl border border-gray-200/80 text-center shadow-sm cursor-pointer"><p class="text-3xl font-bold text-gray-800" id="totalCookies">0</p><p class="text-sm text-gray-500">Total Cookies</p></div>
+                    <div id="violationsCard" class="card-filter interactive-card bg-red-100 p-4 rounded-xl border border-red-300 text-center shadow-sm cursor-pointer hover:bg-red-200"><p class="text-3xl font-bold text-red-600" id="consentViolations">0</p><p class="text-sm text-red-700">Consent Violations</p></div>
+                    <div id="highRiskCard" class="card-filter interactive-card bg-white p-4 rounded-xl border border-gray-200/80 text-center shadow-sm cursor-pointer hover:bg-gray-100"><p class="text-3xl font-bold text-red-600" id="highRiskCookies">0</p><p class="text-sm text-gray-500">High Risk</p></div>
+                    <div id="necessaryCard" class="card-filter interactive-card bg-white p-4 rounded-xl border border-gray-200/80 text-center shadow-sm cursor-pointer"><p class="text-3xl font-bold text-green-600" id="strictlyNecessaryCookies">0</p><p class="text-sm text-gray-500">Necessary</p></div>
+                    <div id="functionalCard" class="card-filter interactive-card bg-white p-4 rounded-xl border border-gray-200/80 text-center shadow-sm cursor-pointer"><p class="text-3xl font-bold text-blue-600" id="functionalCookies">0</p><p class="text-sm text-gray-500">Functional</p></div>
+                    <div id="targetingCard" class="card-filter interactive-card bg-white p-4 rounded-xl border border-gray-200/80 text-center shadow-sm cursor-pointer"><p class="text-3xl font-bold text-orange-500" id="targetingCookies">0</p><p class="text-sm text-gray-500">Targeting</p></div>
+                </div>
+                
+                <!-- Filter & Action Buttons -->
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+                    <div id="filterContainer" class="flex flex-wrap gap-2" role="group"></div>
+                    <div class="flex gap-3">
+                        <button id="downloadPdf" class="interactive-btn bg-white hover:bg-gray-100 text-gray-700 font-medium py-2 px-4 rounded-lg text-sm border border-gray-300 shadow-sm flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H5a1 1 0 110-2V4zm3 1h2v7H7V5zm4 0h2v7h-2V5z" clip-rule="evenodd"></path></svg>
+                            Download PDF
+                        </button>
+                         <button id="clearButton" class="interactive-btn bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-lg text-sm shadow-sm flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd"></path></svg>
+                            New Scan
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Results Table -->
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-200/80 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Consent</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Risk</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendor</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expiry</th>
+                                </tr>
+                            </thead>
+                            <tbody id="resultsTableBody" class="bg-white divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Visualizations -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
+                    <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-lg border border-gray-200/80">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Risk Level Analysis</h3>
+                        <div class="chart-container"><canvas id="riskChart"></canvas></div>
+                    </div>
+                    <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-lg border border-gray-200/80">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Category Breakdown</h3>
+                        <div class="chart-container"><canvas id="categoryChart"></canvas></div>
+                    </div>
+                </div>
+                
+                <!-- Disclaimer -->
+                <div class="mt-8 text-center text-sm text-gray-500 p-4 bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/80">
+                    <p><strong class="font-semibold text-gray-600">Note on Crawling:</strong> This tool performs a highly realistic *simulation* of a multi-page website scan. Due to browser security policies, a frontend-only application cannot perform a live, exhaustive crawl of an external website. A full implementation would require a backend service.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="errorModalContainer" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"></div>
+    <div id="detailsModalContainer" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"></div>
+
+    <script type="module">
+        // --- DOM Element References ---
+        const urlInput = document.getElementById('urlInput');
+        const pageCountSelect = document.getElementById('pageCount');
+        const geoRegionSelect = document.getElementById('geoRegion');
+        const scanButton = document.getElementById('scanButton');
+        const clearButton = document.getElementById('clearButton');
+        const buttonText = document.getElementById('buttonText');
+        const loader = document.getElementById('loader');
+        const scanSection = document.getElementById('scan-section');
+        const resultsSection = document.getElementById('resultsSection');
+        const resultsTableBody = document.getElementById('resultsTableBody');
+        const errorModalContainer = document.getElementById('errorModalContainer');
+        const detailsModalContainer = document.getElementById('detailsModalContainer');
+        const filterContainer = document.getElementById('filterContainer');
+        const downloadPdfButton = document.getElementById('downloadPdf');
+        const summaryCards = {
+            total: document.getElementById('totalCard'),
+            violations: document.getElementById('violationsCard'),
+            highRisk: document.getElementById('highRiskCard'),
+            necessary: document.getElementById('necessaryCard'),
+            functional: document.getElementById('functionalCard'),
+            targeting: document.getElementById('targetingCard'),
+        };
+
+        // --- State & Chart Instances ---
+        let finalCookieReport = [];
+        let categoryChartInstance = null;
+        let riskChartInstance = null;
+        let reportCounts = {};
+
+        // --- Database ---
+        const KNOWN_COOKIE_DB = {
+            'sessionid': { category: 'Strictly Necessary Cookies', purpose: 'Maintains user session state after login.', vendor: 'Self-hosted' },
+            'csrftoken': { category: 'Strictly Necessary Cookies', purpose: 'Prevents Cross-Site Request Forgery attacks.', vendor: 'Self-hosted' },
+            'viewed_cookie_policy': { category: 'Strictly Necessary Cookies', purpose: 'Remembers if the user has accepted the cookie policy.', vendor: 'Self-hosted' },
+            'user_prefs': { category: 'Functional Cookies', purpose: 'Stores user preferences like theme or language.', vendor: 'Self-hosted' },
+            'remember_me': { category: 'Functional Cookies', purpose: 'Keeps the user logged in for a specified duration.', vendor: 'Self-hosted' },
+            '_ga': { category: 'Targeting Cookies', purpose: 'Used by Google Analytics to distinguish users for tracking.', vendor: 'Google LLC' },
+            '_gid': { category: 'Targeting Cookies', purpose: 'Used by Google Analytics to distinguish users.', vendor: 'Google LLC' },
+            '_gat': { category: 'Targeting Cookies', purpose: 'Used by Google Analytics to throttle request rate.', vendor: 'Google LLC' },
+            '__gads': { category: 'Targeting Cookies', purpose: 'Used by Google AdSense for ad delivery or retargeting.', vendor: 'Google LLC' },
+            '_fbp': { category: 'Targeting Cookies', purpose: 'Used by Facebook to deliver targeted advertising.', vendor: 'Meta Platforms, Inc.' },
+            '_twitter_sess': { category: 'Social Media Cookies', purpose: 'Used by Twitter for session management and integration.', vendor: 'Twitter, Inc.' },
+            '_pinterest_cm': { category: 'Social Media Cookies', purpose: 'Used by Pinterest for user tracking and content sharing.', vendor: 'Pinterest, Inc.' },
+            'OptanonConsent': { category: 'Strictly Necessary Cookies', purpose: 'Stores user consent preferences for OneTrust.', vendor: 'OneTrust, LLC' },
+            'ccpa_notice_viewed': { category: 'Strictly Necessary Cookies', purpose: 'Tracks if a user in California has seen the CCPA notice.', vendor: 'Self-hosted' },
+            'gdpr_consent': { category: 'Strictly Necessary Cookies', purpose: 'Stores user consent choices under GDPR.', vendor: 'Self-hosted' }
+        };
+        
+        // --- Utility & Helper Functions ---
+        function isValidUrl(string) { try { new URL(string); return true; } catch (_) { return false; } }
+        function getRiskBadge(risk, reasons = []) { 
+            const colors = { 'Low': 'bg-green-100 text-green-800', 'Medium': 'bg-yellow-100 text-yellow-800', 'High': 'bg-red-100 text-red-800' };
+            const badge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${colors[risk] || 'bg-gray-100'}">${risk}</span>`;
+            if (risk === 'High' && reasons.length > 0) {
+                const reasonText = "High Risk Factors:\n- " + reasons.join("\n- ");
+                const infoIcon = `<span title="${reasonText}" class="ml-1.5 cursor-help"><svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg></span>`;
+                return `<div class="flex items-center">${badge}${infoIcon}</div>`;
+            }
+            return badge;
+        }
+        function getConsentBadge(cookie) {
+            if (cookie.consentViolation) {
+                return `<div class="flex items-center text-red-600 font-semibold text-xs">
+                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.21 3.03-1.742 3.03H4.42c-1.532 0-2.492-1.696-1.742-3.03l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                    No Consent
+                </div>`;
+            }
+            return `<span class="text-green-600 text-xs font-semibold">OK</span>`;
+        }
+        function getCategoryColor(cat) { const c = { S: 'text-green-700', F: 'text-blue-700', T: 'text-red-700', M: 'text-purple-700', U: 'text-gray-500' }; return c[cat[0]] || 'text-gray-500'; }
+        function getIcon(p) { return p ? `<svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>` : `<svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`; }
+        function getSecurityFlags(cookie) { return `${getIcon(cookie.httpOnly)} ${getIcon(cookie.secure)} <span title="SameSite: ${cookie.sameSite}" class="text-xs font-mono bg-gray-200 px-1 rounded">${cookie.sameSite||'N/A'}</span>`; }
+        function formatExpiry(ts) { if(ts===-1||!ts) return 'Session'; const d=new Date(ts*1000); return new Date()>d?'Expired':d.toLocaleDateString(); }
+        
+        // --- Download Function ---
+        function downloadPdf() {
+            if (!finalCookieReport || finalCookieReport.length === 0) return;
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+            
+            const scannedUrl = urlInput.value;
+            const scanDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+            // Report Header
+            doc.setFontSize(18);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Cookie Compliance Report', 14, 22);
+            
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Website Scanned: ${scannedUrl}`, 14, 30);
+            doc.text(`Date of Scan: ${scanDate}`, 14, 35);
+
+            // Summary Section
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Scan Summary', 14, 45);
+            doc.autoTable({
+                startY: 48,
+                theme: 'plain',
+                styles: { fontSize: 10 },
+                body: [
+                    ['Total Cookies Found:', reportCounts.total],
+                    ['Consent Violations:', reportCounts.violations],
+                    ['High Risk Cookies:', reportCounts.highRisk],
+                    ['Strictly Necessary:', reportCounts.necessary],
+                    ['Functional:', reportCounts.functional],
+                    ['Targeting / Social:', reportCounts.targeting],
+                ],
+            });
+
+            // Detailed Cookie Table
+            const finalY = doc.lastAutoTable.finalY || 60;
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Detailed Cookie List', 14, finalY + 10);
+            const columns = ["Name", "Risk", "Category", "Vendor", "Expiry"];
+            const rows = finalCookieReport.map(k => [k.name, k.risk, k.category, k.vendor, formatExpiry(k.expires)]);
+            doc.autoTable({
+                head: [columns],
+                body: rows,
+                startY: finalY + 13,
+                theme: 'grid',
+                headStyles: { fillColor: [37, 99, 235] },
+                styles: { fontSize: 8 }
+            });
+
+            doc.save(`Cookie_Report_${new URL(scannedUrl).hostname}.pdf`);
+        }
+
+        // --- Modals ---
+        function showError(msg) { errorModalContainer.innerHTML=`<div class="bg-white rounded-lg p-6 max-w-sm w-full text-center shadow-2xl modal-enter"><h3 class="text-xl font-bold mb-4 text-red-700">Scan Error</h3><p class="mb-6 text-gray-700">${msg}</p><button id="closeErrorModalBtn" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg">Close</button></div>`; errorModalContainer.classList.remove('hidden'); errorModalContainer.querySelector('#closeErrorModalBtn').onclick=()=>errorModalContainer.classList.add('hidden'); }
+        function showDetailsModal(c) { 
+            let reasonsHtml = '';
+            if (c.risk === 'High' && c.riskReasons && c.riskReasons.length > 0) {
+                reasonsHtml = `<div class="md:col-span-2 bg-red-50 border border-red-200 p-4 rounded-lg">
+                    <strong class="block text-sm text-red-800">High Risk Factors</strong>
+                    <ul class="mt-2 list-disc list-inside text-sm text-red-700">
+                        ${c.riskReasons.map(r => `<li>${r}</li>`).join('')}
+                    </ul>
+                </div>`;
+            }
+            detailsModalContainer.innerHTML=`<div class="bg-white rounded-2xl p-8 max-w-2xl w-full shadow-2xl modal-enter"><div class="flex justify-between items-start"><div><h3 class="text-2xl font-bold">${c.name}</h3><p class="text-sm text-gray-500 mt-1">${c.domain}</p></div><button id="closeDetailsModalBtn" class="p-1 text-gray-400 hover:text-gray-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button></div><div class="mt-6 pt-6 border-t grid grid-cols-1 md:grid-cols-2 gap-6">${reasonsHtml}<div><strong>Category</strong><p class="mt-1 ${getCategoryColor(c.category)} font-semibold">${c.category}</p></div><div><strong>Vendor</strong><p class="mt-1">${c.vendor}</p></div><div><strong>Risk</strong><p class="mt-1">${getRiskBadge(c.risk)}</p></div><div><strong>Expires</strong><p class="mt-1">${formatExpiry(c.expires)}</p></div><div class="md:col-span-2"><strong>Purpose</strong><p class="mt-1">${c.purpose}</p></div><div class="md:col-span-2"><strong>Security</strong><div class="flex items-center gap-4 mt-1">${getSecurityFlags(c)}</div></div><div class="md:col-span-2"><strong>Value</strong><textarea readonly class="w-full h-24 mt-1 p-2 bg-gray-100 text-xs font-mono rounded-md border">${c.value}</textarea></div></div></div>`; 
+            detailsModalContainer.classList.remove('hidden'); 
+            detailsModalContainer.querySelector('#closeDetailsModalBtn').onclick=()=>detailsModalContainer.classList.add('hidden'); 
+        }
+
+        // --- Main Logic & Core Functions ---
+        function setLoadingState(isLoading) {
+            scanButton.disabled = isLoading;
+            if (isLoading) {
+                buttonText.classList.add('hidden');
+                loader.classList.remove('hidden');
+            } else {
+                buttonText.classList.remove('hidden');
+                loader.classList.add('hidden');
+            }
+        }
+        
+        function displayResults(reportData, filter = 'All') {
+            if (!reportData || !Array.isArray(reportData)) { showError("An internal error occurred while trying to display results."); return; }
+            
+            let filteredData;
+            if (filter === 'All') {
+                filteredData = reportData;
+            } else if (filter === 'Violations') {
+                filteredData = reportData.filter(c => c.consentViolation);
+            } else if (filter === 'High Risk') {
+                filteredData = reportData.filter(c => c.risk === 'High');
+            } else {
+                filteredData = reportData.filter(c => c.category === filter);
+            }
+
+            resultsTableBody.innerHTML = '';
+            if (filteredData.length === 0) {
+                let message = 'No cookies were found for this URL.';
+                if (filter !== 'All') {
+                    const filterName = filter.replace(' Cookies', '').replace('Violations', 'Consent Violations');
+                    message = `No cookies found for the "${filterName}" filter.`;
+                }
+                resultsTableBody.innerHTML = `<tr><td colspan="6" class="text-center p-8 text-gray-500">${message}</td></tr>`;
+            } else {
+                filteredData.forEach(cookie => {
+                    const row = document.createElement('tr');
+                    row.dataset.clickable = "true";
+                    row.onclick = () => showDetailsModal(cookie);
+                    row.innerHTML = `<td class="px-6 py-4"><p class="font-medium">${cookie.name}</p><p class="text-xs text-gray-500">${cookie.domain}</p></td><td class="px-6 py-4">${getConsentBadge(cookie)}</td><td class="px-6 py-4">${getRiskBadge(cookie.risk, cookie.riskReasons)}</td><td class="px-6 py-4 font-semibold ${getCategoryColor(cookie.category)}">${cookie.category}</td><td class="px-6 py-4 text-gray-600">${cookie.vendor}</td><td class="px-6 py-4 text-gray-600">${formatExpiry(cookie.expires)}</td>`;
+                    resultsTableBody.appendChild(row);
+                });
+            }
+
+            reportCounts = reportData.reduce((acc, c) => {
+                acc.total++;
+                if (c.consentViolation) acc.violations++;
+                if (c.risk === 'High') acc.highRisk++;
+                if (c.category === 'Strictly Necessary Cookies') acc.necessary++;
+                else if (c.category === 'Functional Cookies') acc.functional++;
+                else if (c.category === 'Targeting Cookies' || c.category === 'Social Media Cookies') acc.targeting++;
+                return acc;
+            }, { total: 0, violations: 0, highRisk: 0, necessary: 0, functional: 0, targeting: 0 });
+
+            document.getElementById('totalCookies').textContent = reportCounts.total;
+            document.getElementById('consentViolations').textContent = reportCounts.violations;
+            document.getElementById('highRiskCookies').textContent = reportCounts.highRisk;
+            document.getElementById('strictlyNecessaryCookies').textContent = reportCounts.necessary;
+            document.getElementById('functionalCookies').textContent = reportCounts.functional;
+            document.getElementById('targetingCookies').textContent = reportCounts.targeting;
+
+            updateCharts(reportCounts);
+            updateActiveFilters(filter);
+            scanSection.classList.add('hidden');
+            resultsSection.classList.remove('hidden');
+        }
+
+        function updateActiveFilters(activeFilter) {
+            Object.values(summaryCards).forEach(card => card.classList.remove('active'));
+            const buttons = filterContainer.querySelectorAll('.filter-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+
+            if (activeFilter === 'All') {
+                summaryCards.total.classList.add('active');
+                const btn = Array.from(buttons).find(b => b.dataset.filter === 'All');
+                if (btn) btn.classList.add('active');
+            } else if (activeFilter === 'Violations') {
+                summaryCards.violations.classList.add('active');
+            } else if (activeFilter === 'High Risk') {
+                summaryCards.highRisk.classList.add('active');
+            } else {
+                if (activeFilter === 'Strictly Necessary Cookies') summaryCards.necessary.classList.add('active');
+                if (activeFilter === 'Functional Cookies') summaryCards.functional.classList.add('active');
+                if (activeFilter === 'Targeting Cookies') summaryCards.targeting.classList.add('active');
+                
+                const btn = Array.from(buttons).find(b => b.dataset.filter === activeFilter);
+                if (btn) btn.classList.add('active');
+            }
+        }
+
+        function renderFilterButtons() {
+            const categories = ['All', 'Strictly Necessary Cookies', 'Functional Cookies', 'Targeting Cookies', 'Social Media Cookies'];
+            filterContainer.innerHTML = '';
+            categories.forEach(category => {
+                const button = document.createElement('button');
+                button.textContent = category.replace(' Cookies', '');
+                button.dataset.filter = category;
+                button.className = `filter-btn interactive-btn py-2 px-4 rounded-lg text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:bg-gray-100`;
+                button.onclick = () => displayResults(finalCookieReport, category);
+                filterContainer.appendChild(button);
+            });
+        }
+
+        function updateCharts(counts) {
+            const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+            const riskCtx = document.getElementById('riskChart').getContext('2d');
+            if(categoryChartInstance) categoryChartInstance.destroy();
+            categoryChartInstance = new Chart(categoryCtx, { type: 'doughnut', data: { labels: ['Necessary', 'Functional', 'Targeting/Social'], datasets: [{ data: [counts.necessary, counts.functional, counts.targeting], backgroundColor: ['#10B981', '#3B82F6', '#F97316'], borderColor: '#ffffff', borderWidth: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
+            if(riskChartInstance) riskChartInstance.destroy();
+            const riskData = finalCookieReport.reduce((acc, c) => { acc[c.risk] = (acc[c.risk] || 0) + 1; return acc; }, { Low: 0, Medium: 0, High: 0 });
+            riskChartInstance = new Chart(riskCtx, { type: 'bar', data: { labels: ['Low Risk', 'Medium Risk', 'High Risk'], datasets: [{ label: '# of Cookies', data: [riskData.Low, riskData.Medium, riskData.High], backgroundColor: ['#10B981', '#F59E0B', '#EF4444'], borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } } });
+        }
+
+        async function callGeminiApi(prompt) { const apiKey=""; const apiUrl=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`; const payload={contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{responseMimeType:"application/json",responseSchema:{type:"OBJECT",properties:{category:{type:"STRING"},purpose:{type:"STRING"},vendor:{type:"STRING"},risk:{type:"STRING"}},required:["category","purpose","vendor","risk"]}}}; const response=await fetch(apiUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); if(!response.ok)throw new Error(`Gemini API error: ${response.status}`); const result=await response.json(); if(result.candidates?.[0]?.content?.parts?.[0]?.text){return JSON.parse(result.candidates[0].content.parts[0].text);} throw new Error("Invalid response from Gemini API."); }
+        async function aiCategorizeCookies(cookies) { const unclassified=cookies.filter(c=>c.category==='Unclassified'); if(unclassified.length===0){return cookies;} const aiPromises=unclassified.map(cookie=>{ const prompt=`Analyze the cookie: name="${cookie.name}", domain="${cookie.domain}". Classify its category ("Strictly Necessary Cookies", "Functional Cookies", "Targeting Cookies", "Social Media Cookies", "Unclassified"), provide a one-sentence purpose, identify the vendor company, and assess privacy risk ("Low", "Medium", "High"). Respond ONLY with a valid JSON object: {"category": "...", "purpose": "...", "vendor": "...", "risk": "..."}`; return callGeminiApi(prompt).then(aiResponse=>({...cookie,...aiResponse})).catch(err=>{console.warn(`AI categorization failed for ${cookie.name}:`,err); return cookie;}); }); const categorizedResults=await Promise.all(aiPromises); const categorizedMap=new Map(categorizedResults.map(c=>[`${c.name}:${c.domain}`,c])); return cookies.map(originalCookie=>{const key=`${originalCookie.name}:${originalCookie.domain}`; return categorizedMap.get(key)||originalCookie;}); }
+        
+        function calculateRiskScore(cookie, url) {
+            let score = 0;
+            let reasons = [];
+            const mainDomain = new URL(url).hostname;
+            
+            if (cookie.consentViolation) {
+                score = 100; // Max score for consent violation
+                reasons.push('Dropped before user consent was given.');
+            }
+            if (cookie.category === 'Targeting Cookies' || cookie.category === 'Social Media Cookies') {
+                score += 40;
+                reasons.push('Categorized as Targeting or Social Media.');
+            }
+            if (!cookie.domain.includes(mainDomain.replace('www.', ''))) {
+                score += 30;
+                reasons.push('Third-party cookie from a different domain.');
+            }
+            const expiry = cookie.expires * 1000;
+            const oneYear = Date.now() + 31536000000; // 365 days
+            if (expiry > oneYear) {
+                score += 20;
+                reasons.push('Long expiry (> 1 year).');
+            }
+            if (!cookie.secure) {
+                score += 10;
+                reasons.push('Not sent over a secure (HTTPS) connection.');
+            }
+            if (!cookie.httpOnly) {
+                score += 5;
+                reasons.push('Accessible by client-side scripts.');
+            }
+            
+            let risk = 'Low';
+            if (score >= 60) risk = 'High';
+            else if (score >= 30) risk = 'Medium';
+            
+            return { risk, reasons: risk === 'High' ? [...new Set(reasons)] : [] }; // Return unique reasons
+        }
+
+        async function processCookies(cookies, url) {
+            const processed = cookies.map(cookie => {
+                const knownInfo = KNOWN_COOKIE_DB[cookie.name] || {};
+                let enriched = { ...cookie, category: 'Unclassified', purpose: 'Unknown', vendor: 'Unknown', ...knownInfo };
+                
+                enriched.consentViolation = enriched.consentState === 'pre-consent' && enriched.category !== 'Strictly Necessary Cookies';
+
+                const riskInfo = calculateRiskScore(enriched, url);
+                enriched.risk = riskInfo.risk;
+                enriched.riskReasons = riskInfo.reasons;
+                return enriched;
+            });
+            return await aiCategorizeCookies(processed);
+        }
+        
+        function mockExtractCookies(url,pageCount,region){
+            const d=new URL(url).hostname.replace('www.','');
+            let preConsentCookies = [
+                {name:'sessionid',value:'abc123xyz',domain:d,path:'/',expires:-1,httpOnly:true,secure:true,sameSite:'Strict', consentState: 'pre-consent'},
+                {name:'_ga',value:'GA1.2.PRE.123',domain:`.${d}`,path:'/',expires:Date.now()/1000+63072000,httpOnly:false,secure:true,sameSite:'Lax', consentState: 'pre-consent'},
+            ];
+            let postConsentCookies = [
+                {name:'_fbp',value:'fb.1.162..._123',domain:`.${d}`,path:'/',expires:Date.now()/1000+7776000,httpOnly:false,secure:true,sameSite:'None', consentState: 'post-consent'},
+                {name:'user_prefs',value:'theme=dark&lang=en',domain:d,path:'/',expires:Date.now()/1000+2592000,httpOnly:false,secure:false,sameSite:'Lax', consentState: 'post-consent'},
+                {name:'ad_tracker_id_v2',value:'uid-9876-5432',domain:'.ads.thirdparty.com',path:'/',expires:Date.now()/1000+15552000,httpOnly:false,secure:true,sameSite:'None', consentState: 'post-consent'},
+                {name:'_twitter_sess',value:'some_long_string_here',domain:'.twitter.com',path:'/',expires:-1,httpOnly:false,secure:true,sameSite:'None', consentState: 'post-consent'},
+            ];
+            if(region==='eu') preConsentCookies.push({name:'gdpr_consent',value:'pending',domain:d,path:'/',expires:Date.now()/1000+31536000,httpOnly:false,secure:true,sameSite:'Strict', consentState: 'pre-consent'});
+            let allCookies = [...preConsentCookies, ...postConsentCookies];
+            for(let i=1;i<pageCount;i++){
+                allCookies.push({name:`page_tracker_${i}`,value:crypto.randomUUID(),domain:`.${d}`,path:'/',expires:Date.now()/1000+31536000,httpOnly:false,secure:true,sameSite:'Lax', consentState: 'post-consent'});
+                if(i%3===0) allCookies.push({name:`_partner_id_${i}`,value:crypto.randomUUID(),domain:`.partner-${i}.com`,path:'/',expires:Date.now()/1000+31536000,httpOnly:false,secure:true,sameSite:'None', consentState: 'post-consent'});
+            }
+            return Array.from(new Map(allCookies.map(k=>[`${k.name}:${k.domain}`,k])).values());
+        }
+
+        function clearResults() {
+            finalCookieReport = [];
+            reportCounts = {};
+            urlInput.value = '';
+            resultsSection.classList.add('hidden');
+            scanSection.classList.remove('hidden');
+            if(categoryChartInstance) categoryChartInstance.destroy();
+            if(riskChartInstance) riskChartInstance.destroy();
+        }
+
+        async function handleScan() {
+            const url = urlInput.value.trim();
+            if (!isValidUrl(url)) {
+                showError('Please enter a valid URL (e.g., https://example.com)');
+                return;
+            }
+            setLoadingState(true);
+            try {
+                const pageCount = parseInt(pageCountSelect.value, 10);
+                const region = geoRegionSelect.value;
+                const extractedCookies = mockExtractCookies(url, pageCount, region);
+                const enrichedCookies = await processCookies(extractedCookies, url);
+                finalCookieReport = enrichedCookies;
+                renderFilterButtons();
+                displayResults(finalCookieReport, 'All');
+            } catch (error) {
+                console.error("Scan failed:", error);
+                showError(error.message || 'An unexpected error occurred during the scan.');
+            } finally {
+                setLoadingState(false);
+            }
+        }
+
+        // --- Event Listeners ---
+        window.addEventListener('DOMContentLoaded', () => {
+            scanButton.addEventListener('click', handleScan);
+            clearButton.addEventListener('click', clearResults);
+            downloadPdfButton.addEventListener('click', downloadPdf);
+            summaryCards.total.addEventListener('click', () => displayResults(finalCookieReport, 'All'));
+            summaryCards.violations.addEventListener('click', () => displayResults(finalCookieReport, 'Violations'));
+            summaryCards.highRisk.addEventListener('click', () => displayResults(finalCookieReport, 'High Risk'));
+            summaryCards.necessary.addEventListener('click', () => displayResults(finalCookieReport, 'Strictly Necessary Cookies'));
+            summaryCards.functional.addEventListener('click', () => displayResults(finalCookieReport, 'Functional Cookies'));
+            summaryCards.targeting.addEventListener('click', () => displayResults(finalCookieReport, 'Targeting Cookies'));
+        });
+
+    </script>
+</body>
+</html>
